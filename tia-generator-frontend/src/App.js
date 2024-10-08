@@ -53,7 +53,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000/generate-tia',
+        process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999/generate-tia',
         formData
       );
       setTiaReport(response.data.tia_report);

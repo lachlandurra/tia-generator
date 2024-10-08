@@ -1,13 +1,24 @@
+# app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-import openai
+from openai import OpenAI
+import logging
 
 app = Flask(__name__)
-CORS(app)
+# Allow both localhost and 127.0.0.1 in development
+CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
+logging.basicConfig(level=logging.DEBUG)
 
-# Set your OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')
+# Initialize the OpenAI client
+client = OpenAI(
+    api_key=os.getenv('OPENAI_API_KEY')
+)
+
+# Root route
+@app.route('/', methods=['GET'])
+def home():
+    return "TIA Generator Backend is Running.", 200
 
 @app.route('/generate-tia', methods=['POST'])
 def generate_tia():
@@ -40,16 +51,19 @@ def generate_tia():
     """
 
     try:
-        response = openai.Completion.create(
-            engine='text-davinci-003',  # You may choose a different model
-            prompt=prompt,
+        # Create a chat completion using the new client
+        response = client.chat.completions.create(
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            model="gpt-3.5-turbo",
             max_tokens=1500,
             temperature=0.7,
         )
-        tia_report = response.choices[0].text.strip()
+        tia_report = response.choices[0].message.content.strip()
         return jsonify({'tia_report': tia_report})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=4999)
