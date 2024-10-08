@@ -24,25 +24,65 @@ const theme = createTheme({
 
 function App() {
   const [formData, setFormData] = useState({
-    site_location: '',
-    site_type: '',
-    existing_conditions: '',
-    existing_use: '',
-    proposal: '',
-    parking_assessment: '',
-    compliance_comments: '',
-    other_matters: '',
+    project_details: {
+      project_title: '',
+      site_address: '',
+      consultant_name: 'Dai Wang', // Fixed value
+      company_name: 'TrafficAble Consultants', // Fixed value
+      qualifications: 'B.Eng (Civil), MEng Study (Traffic and Transport)', // Fixed value
+      contact_details: 'Email: trafficable@gmail.com, Mobile: 0450461917', // Fixed value
+      client_name: '',
+      report_date: '',
+      report_version: '',
+    },
+    introduction: {
+      purpose: '',
+      council_feedback: '',
+    },
+    existing_conditions: {
+      site_location_description: '',
+      existing_land_use_and_layout: '',
+      surrounding_road_network_details: '',
+      public_transport_options: '',
+    },
+    proposal: {
+      description: '',
+      facilities_details: '',
+      parking_arrangement: '',
+    },
+    parking_assessment: {
+      existing_parking_provision: '',
+      proposed_parking_provision: '',
+      parking_rates_calculations: '',
+      expected_patrons: '',
+      justification: '',
+    },
+    parking_design: {
+      dimensions_layout: '',
+      compliance: '',
+    },
+    other_matters: {
+      bicycle_parking: '',
+      loading_and_waste: '',
+      traffic_generation: '',
+    },
+    conclusion: {
+      summary: '',
+    },
   });
 
   const [tiaReport, setTiaReport] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (section, field, value) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [section]: {
+        ...prevState[section],
+        [field]: value,
+      },
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -64,13 +104,13 @@ function App() {
       setLoading(false);
     }
   };
-
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <div>
+      <div className="bg-gray-100 min-h-screen">
         <Header />
-        <Container maxWidth="md">
+        <Container maxWidth="md" className="bg-white p-6 rounded-lg shadow-md my-10">
           <TiaForm
             formData={formData}
             handleChange={handleChange}
@@ -79,7 +119,7 @@ function App() {
           />
           {loading && <Loader />}
           {error && (
-            <Alert severity="error" sx={{ marginTop: 2 }}>
+            <Alert severity="error" className="mt-4">
               {error}
             </Alert>
           )}
