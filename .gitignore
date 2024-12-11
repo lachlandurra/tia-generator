@@ -1,5 +1,6 @@
 # Backend
 .env
+backend/.env
 
 # Frontend
-tia-generator-frontend/.env
+frontend/.env
