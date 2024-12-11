@@ -57,13 +57,17 @@ function App() {
     setTiaReport('');
     setError('');
 
+    console.log("handleSubmit triggered, current formData:", formData);
+
     try {
       const response = await axios.post(
         process.env.REACT_APP_BACKEND_URL || 'http://localhost:4999/generate-tia',
         JSON.stringify(formData),
         { headers: { 'Content-Type': 'application/json' } }
       );
-      setTiaReport(response.data.tia_report);
+
+      console.log("Response from /generate-tia:", response.data);
+      setTiaReport(response.data);
     } catch (err) {
       console.error('Error generating TIA:', err);
       setError('An error occurred while generating the TIA.');
@@ -78,10 +82,23 @@ function App() {
       <div className="bg-gray-100 min-h-screen">
         <Header />
         <Container maxWidth="md" className="bg-white p-6 rounded-lg shadow-md my-10">
-          <TiaForm formData={formData} handleChange={handleChange} handleSubmit={handleSubmit} loading={loading} />
+          {!tiaReport && (
+            <TiaForm
+              formData={formData}
+              handleChange={handleChange}
+              handleSubmit={handleSubmit}
+              loading={loading}
+            />
+          )}
           {loading && <Loader />}
-          {error && <Alert severity="error" className="mt-4">{error}</Alert>}
-          {tiaReport && <TiaReport report={tiaReport} formData={formData} />}
+          {error && (
+            <Alert severity="error" className="mt-4">
+              {error}
+            </Alert>
+          )}
+          {tiaReport && (
+            <TiaReport report={tiaReport} formData={formData} />
+          )}
         </Container>
       </div>
     </ThemeProvider>

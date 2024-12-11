@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 import openai
 import logging
 import time
@@ -10,7 +11,9 @@ import io
 
 load_dotenv()
 
-openai.api_key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(
+    api_key = os.getenv("OPENAI_API_KEY"),
+)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -25,6 +28,8 @@ def generate_tia():
     data = request.get_json()
     if data is None:
         return jsonify({"error": "No JSON received"}), 400
+    
+    app.logger.debug("Received form data for TIA generation: %s", data)
 
     project_details = data.get('project_details', {})
     introduction = data.get('introduction', {})
@@ -35,58 +40,45 @@ def generate_tia():
     other_matters = data.get('other_matters', {})
     conclusion = data.get('conclusion', {})
 
+    app.logger.debug("Project details: %s", project_details)
+    app.logger.debug("Introduction: %s", introduction)
+    app.logger.debug("Existing Conditions: %s", existing_conditions)
+    app.logger.debug("Proposal: %s", proposal)
+    app.logger.debug("Parking Assessment: %s", parking_assessment)
+    app.logger.debug("Parking Design: %s", parking_design)
+    app.logger.debug("Other Matters: %s", other_matters)
+    app.logger.debug("Conclusion: %s", conclusion)
+
     # Construct the prompt
     prompt = f"""
-You are a traffic engineer tasked with generating a Traffic Impact Assessment (TIA) report based on the following information:
+You are a traffic engineer tasked with generating a Traffic Impact Assessment (TIA) report based on the given input. 
+The input is rough, containing only brief points. You must produce a coherent, formal, and detailed TIA report that greatly expands and formalizes each section.
 
-### Project Details
-Project Title: {project_details.get('project_title', '')}
-Site Address: {project_details.get('site_address', '')}
-Prepared By:
-  - Name: {project_details.get('consultant_name', '')}
-  - Company: {project_details.get('company_name', '')}
-  - Qualifications: {project_details.get('qualifications', '')}
-  - Contact Details: {project_details.get('contact_details', '')}
-Client Name: {project_details.get('client_name', '')}
-Report Date: {project_details.get('report_date', '')}
+The final output MUST be in JSON format with the following keys and no extra text outside JSON:
 
-### Introduction
-Purpose of the Report: {introduction.get('purpose', '')}
-Council Feedback: {introduction.get('council_feedback', '')}
+{{
+  "introduction_purpose": "A fully formed paragraph(s) based on {introduction.get('purpose', '')}",
+  "existing_conditions_site_location": "A fully formed paragraph(s) expanding on {existing_conditions.get('site_location_description', '')}",
+  "existing_conditions_land_use": "A fully formed paragraph(s) from {existing_conditions.get('existing_land_use_and_layout', '')}",
+  "existing_conditions_road_network": "A fully formed paragraph(s) from {existing_conditions.get('surrounding_road_network_details', '')}",
+  "existing_conditions_public_transport": "A fully formed paragraph(s) from {existing_conditions.get('public_transport_options', '')}",
+  "proposal_description": "A fully formed paragraph(s) from {proposal.get('description', '')}",
+  "proposal_facilities": "A fully formed paragraph(s) from {proposal.get('facilities_details', '')}",
+  "proposal_parking": "A fully formed paragraph(s) from {proposal.get('parking_arrangement', '')}",
+  "parking_existing_provision": "A fully formed paragraph(s) from {parking_assessment.get('existing_parking_provision', '')}",
+  "parking_proposed_provision": "A fully formed paragraph(s) from {parking_assessment.get('proposed_parking_provision', '')}",
+  "parking_rates_calculations": "A fully formed paragraph(s) from {parking_assessment.get('parking_rates_calculations', '')}",
+  "parking_expected_patrons": "A fully formed paragraph(s) from {parking_assessment.get('expected_patrons', '')}",
+  "parking_justification": "A fully formed paragraph(s) from {parking_assessment.get('justification', '')}",
+  "parking_design_dimensions": "A fully formed paragraph(s) from {parking_design.get('dimensions_layout', '')}",
+  "parking_design_compliance": "A fully formed paragraph(s) from {parking_design.get('compliance', '')}",
+  "other_bicycle_parking": "A fully formed paragraph(s) from {other_matters.get('bicycle_parking', '')}",
+  "other_loading_waste": "A fully formed paragraph(s) from {other_matters.get('loading_and_waste', '')}",
+  "other_traffic_generation": "A fully formed paragraph(s) from {other_matters.get('traffic_generation', '')}",
+  "conclusion_summary": "A fully formed paragraph(s) from {conclusion.get('summary', '')}"
+}}
 
-### Existing Conditions
-Site Location Description: {existing_conditions.get('site_location_description', '')}
-Existing Land Use and Layout: {existing_conditions.get('existing_land_use_and_layout', '')}
-Surrounding Road Network Details: {existing_conditions.get('surrounding_road_network_details', '')}
-Public Transport Options: {existing_conditions.get('public_transport_options', '')}
-
-### The Proposal
-Description of Proposed Development: {proposal.get('description', '')}
-Details of Proposed Facilities: {proposal.get('facilities_details', '')}
-Proposed Parking Arrangement: {proposal.get('parking_arrangement', '')}
-
-### Parking Assessment
-Existing Parking Provision: {parking_assessment.get('existing_parking_provision', '')}
-Proposed Parking Provision: {parking_assessment.get('proposed_parking_provision', '')}
-Applicable Parking Rates and Calculations: {parking_assessment.get('parking_rates_calculations', '')}
-Expected Number of Patrons: {parking_assessment.get('expected_patrons', '')}
-Justification for Parking Provision: {parking_assessment.get('justification', '')}
-
-### Parking Space Design
-Dimensions and Layout: {parking_design.get('dimensions_layout', '')}
-Compliance with Standards: {parking_design.get('compliance', '')}
-
-### Other Matters
-Bicycle Parking Requirements and Provision: {other_matters.get('bicycle_parking', '')}
-Loading and Waste Collection Details: {other_matters.get('loading_and_waste', '')}
-Traffic Generation Estimates: {other_matters.get('traffic_generation', '')}
-
-### Conclusion
-Summary of Findings: {conclusion.get('summary', '')}
-
-Generate a comprehensive Traffic Impact Assessment report based on the above information. Use Australian English and be very detailed.
-
-Each paragraph in the Existing Conditions, The Proposal, Parking Assessment, Parking Space Design, Other Matters, Conclusion sections should be at least 100 words. 
+Each value should contain a detailed, formalized paragraph or paragraphs that elaborate significantly on the user's rough input. Make sure the text is coherent, uses Australian English, and is professional. Do not include any content outside the JSON object.
     """
 
     max_retries = 5
@@ -95,17 +87,27 @@ Each paragraph in the Existing Conditions, The Proposal, Parking Assessment, Par
     for attempt in range(max_retries):
         try:
             # Use the new API interface
-            response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=4000,
+                max_tokens=6000,
                 temperature=0.7
             )
-            tia_report = response.choices[0].message.content.strip()
-            return jsonify({'tia_report': tia_report})
+            app.logger.debug("OpenAI raw response: %s", response)
+            tia_report_json = response.choices[0].message.content.strip()
+            app.logger.debug("OpenAI extracted message content: %s", tia_report_json)
+
+            # Parse the JSON returned by OpenAI
+            import json
+            try:
+                tia_data = json.loads(tia_report_json)
+                app.logger.debug("Parsed TIA data from OpenAI: %s", tia_data)
+            except json.JSONDecodeError:
+                return jsonify({"error": "The AI did not return valid JSON."}), 500
+
+            return jsonify(tia_data)
 
         except openai.RateLimitError:
-            # Rate limit exceeded
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 retry_delay *= 2
@@ -114,7 +116,6 @@ Each paragraph in the Existing Conditions, The Proposal, Parking Assessment, Par
                 return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
 
         except openai.APIConnectionError:
-            # Connection error
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 retry_delay *= 2
@@ -123,78 +124,79 @@ Each paragraph in the Existing Conditions, The Proposal, Parking Assessment, Par
                 return jsonify({'error': 'Unable to connect to OpenAI API. Please try again later.'}), 503
 
         except openai.APIError:
-            # Generic API error
             return jsonify({'error': 'An error occurred while processing your request.'}), 500
 
-        except Exception:
-            # Catch-all for unexpected errors
-            return jsonify({'error': 'An unexpected error occurred.'}), 500
+        except Exception as e:
+            import traceback
+            tb_str = ''.join(traceback.format_exception(None, e, e.__traceback__))
+
+            # Log it and also send it back in the response for debugging
+            app.logger.error(tb_str)
+            return jsonify({"error": str(e), "traceback": tb_str}), 500
+
 
 @app.route('/download-docx', methods=['POST'])
 def download_docx():
     data = request.get_json()
     if data is None:
         return jsonify({"error": "No JSON received"}), 400
+    
+    app.logger.debug("Received data for docx generation: %s", data)
 
-    project_details = data.get('project_details', {})
-    introduction = data.get('introduction', {})
-    existing_conditions = data.get('existing_conditions', {})
-    proposal = data.get('proposal', {})
-    parking_assessment = data.get('parking_assessment', {})
-    parking_design = data.get('parking_design', {})
-    other_matters = data.get('other_matters', {})
-    conclusion = data.get('conclusion', {})
-
+    # data now contains both formData and tiaReport keys.
+    # tiaReport keys are the placeholders you want to fill:
     context = {
-        'project_title': project_details.get('project_title', ''),
-        'site_address': project_details.get('site_address', ''),
-        'consultant_name': project_details.get('consultant_name', ''),
-        'company_name': project_details.get('company_name', ''),
-        'client_name': project_details.get('client_name', ''),
-        'report_date': project_details.get('report_date', ''),
-
-        'introduction_purpose': introduction.get('purpose', ''),
-        'introduction_council_feedback': introduction.get('council_feedback', ''),
-
-        'existing_conditions_site_location': existing_conditions.get('site_location_description', ''),
-        'existing_conditions_land_use': existing_conditions.get('existing_land_use_and_layout', ''),
-        'existing_conditions_road_network': existing_conditions.get('surrounding_road_network_details', ''),
-        'existing_conditions_public_transport': existing_conditions.get('public_transport_options', ''),
-
-        'proposal_description': proposal.get('description', ''),
-        'proposal_facilities': proposal.get('facilities_details', ''),
-        'proposal_parking': proposal.get('parking_arrangement', ''),
-
-        'parking_existing_provision': parking_assessment.get('existing_parking_provision', ''),
-        'parking_proposed_provision': parking_assessment.get('proposed_parking_provision', ''),
-        'parking_rates_calculations': parking_assessment.get('parking_rates_calculations', ''),
-        'parking_expected_patrons': parking_assessment.get('expected_patrons', ''),
-        'parking_justification': parking_assessment.get('justification', ''),
-
-        'parking_design_dimensions': parking_design.get('dimensions_layout', ''),
-        'parking_design_compliance': parking_design.get('compliance', ''),
-
-        'other_bicycle_parking': other_matters.get('bicycle_parking', ''),
-        'other_loading_waste': other_matters.get('loading_and_waste', ''),
-        'other_traffic_generation': other_matters.get('traffic_generation', ''),
-
-        'conclusion_summary': conclusion.get('summary', '')
+        'introduction_purpose': data.get('introduction_purpose', ''),
+        'existing_conditions_site_location': data.get('existing_conditions_site_location', ''),
+        'existing_conditions_land_use': data.get('existing_conditions_land_use', ''),
+        'existing_conditions_road_network': data.get('existing_conditions_road_network', ''),
+        'existing_conditions_public_transport': data.get('existing_conditions_public_transport', ''),
+        'proposal_description': data.get('proposal_description', ''),
+        'proposal_facilities': data.get('proposal_facilities', ''),
+        'proposal_parking': data.get('proposal_parking', ''),
+        'parking_existing_provision': data.get('parking_existing_provision', ''),
+        'parking_proposed_provision': data.get('parking_proposed_provision', ''),
+        'parking_rates_calculations': data.get('parking_rates_calculations', ''),
+        'parking_expected_patrons': data.get('parking_expected_patrons', ''),
+        'parking_justification': data.get('parking_justification', ''),
+        'parking_design_dimensions': data.get('parking_design_dimensions', ''),
+        'parking_design_compliance': data.get('parking_design_compliance', ''),
+        'other_bicycle_parking': data.get('other_bicycle_parking', ''),
+        'other_loading_waste': data.get('other_loading_waste', ''),
+        'other_traffic_generation': data.get('other_traffic_generation', ''),
+        'conclusion_summary': data.get('conclusion_summary', '')
     }
 
-    template_path = 'templates/tia_template.docx'
-    doc = DocxTemplate(template_path)
-    doc.render(context)
+    app.logger.debug("Context for docx template rendering: %s", context)
 
-    output_stream = io.BytesIO()
-    doc.save(output_stream)
-    output_stream.seek(0)
+    # Check if all fields are as expected
+    for key, value in context.items():
+        app.logger.debug("Context field '%s': '%s'", key, value)
 
-    return send_file(
-        output_stream,
-        as_attachment=True,
-        download_name='TIA_Report.docx',
-        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    )
+    try:
+        template_path = 'templates/tia_template.docx'
+        doc = DocxTemplate(template_path)
+        doc.render(context)
+        app.logger.debug("Docx template rendered successfully.")
+
+        output_stream = io.BytesIO()
+        doc.save(output_stream)
+        output_stream.seek(0)
+        app.logger.debug("Docx file generated successfully, returning file.")
+
+        return send_file(
+            output_stream,
+            as_attachment=True,
+            download_name='TIA_Report.docx',
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception as e:
+        import traceback
+        tb_str = ''.join(traceback.format_exception(None, e, e.__traceback__))
+        app.logger.error("Error generating docx: %s", tb_str)
+        return jsonify({"error": str(e), "traceback": tb_str}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=4999)

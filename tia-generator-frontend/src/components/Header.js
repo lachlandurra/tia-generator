@@ -1,16 +1,14 @@
-// Header.js
-
 import React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
+import ArticleIcon from '@mui/icons-material/Article';
 
 function Header() {
   return (
     <AppBar position="static">
       <Toolbar>
-        <SportsSoccerIcon sx={{ mr: 2 }} />
+        <ArticleIcon sx={{ mr: 2 }} />
         <Typography variant="h6" component="div">
           TIA Generator
         </Typography>
