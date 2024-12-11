@@ -45,14 +45,6 @@ function TiaForm({ formData, handleChange, handleSubmit, loading }) {
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid item xs={6}>
-          <TextField
-            label="Report Version"
-            value={formData.project_details.report_version}
-            onChange={(e) => handleChange('project_details', 'report_version', e.target.value)}
-            fullWidth
-          />
-        </Grid>
       </Grid>
 
       {/* Introduction */}

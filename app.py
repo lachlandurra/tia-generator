@@ -1,47 +1,31 @@
-# app.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
+from dotenv import load_dotenv
 import openai
 import logging
 import time
-from dotenv import load_dotenv
+from docxtpl import DocxTemplate
+import io
 
 load_dotenv()
 
-app = Flask(__name__)
-# Allow both localhost and 127.0.0.1 in development
-CORS(app, resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000"]}})
-logging.basicConfig(level=logging.DEBUG)
-
-# Set OpenAI API key
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Root route
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+logging.basicConfig(level=logging.DEBUG)
+
 @app.route('/', methods=['GET'])
 def home():
     return "TIA Generator Backend is Running.", 200
 
-@app.route('/test-openai', methods=['GET'])
-def test_openai():
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Hello!"},
-            ],
-        )
-        message = response.choices[0].message.content.strip()
-        return jsonify({'message': message})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/generate-tia', methods=['POST'])
 def generate_tia():
-    data = request.json
+    data = request.get_json()
+    if data is None:
+        return jsonify({"error": "No JSON received"}), 400
 
-    # Extract data from the request
     project_details = data.get('project_details', {})
     introduction = data.get('introduction', {})
     existing_conditions = data.get('existing_conditions', {})
@@ -51,7 +35,7 @@ def generate_tia():
     other_matters = data.get('other_matters', {})
     conclusion = data.get('conclusion', {})
 
-    # Construct the prompt for OpenAI API
+    # Construct the prompt
     prompt = f"""
 You are a traffic engineer tasked with generating a Traffic Impact Assessment (TIA) report based on the following information:
 
@@ -65,7 +49,6 @@ Prepared By:
   - Contact Details: {project_details.get('contact_details', '')}
 Client Name: {project_details.get('client_name', '')}
 Report Date: {project_details.get('report_date', '')}
-Report Version: {project_details.get('report_version', '')}
 
 ### Introduction
 Purpose of the Report: {introduction.get('purpose', '')}
@@ -101,51 +84,117 @@ Traffic Generation Estimates: {other_matters.get('traffic_generation', '')}
 ### Conclusion
 Summary of Findings: {conclusion.get('summary', '')}
 
-Generate a comprehensive Traffic Impact Assessment report based on the above information. The report should follow standard formatting and include all necessary sections such as Introduction, Existing Conditions, The Proposal, Parking Assessment, Parking Space Design, Other Matters, and Conclusion. Use Australian English and ensure that the report is suitable for submission to local council authorities.
+Generate a comprehensive Traffic Impact Assessment report based on the above information. Use Australian English and be very detailed.
 
-Note: Where specific details are not provided, make reasonable assumptions based on standard practices, but indicate that these are assumptions.
+Each paragraph in the Existing Conditions, The Proposal, Parking Assessment, Parking Space Design, Other Matters, Conclusion sections should be at least 100 words. 
     """
 
     max_retries = 5
-    retry_delay = 1  # Start with a 1-second delay
+    retry_delay = 1
 
     for attempt in range(max_retries):
         try:
-            # Create a chat completion using the OpenAI API
-            response = openai.ChatCompletion.create(
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
+            # Use the new API interface
+            response = openai.chat.completions.create(
                 model="gpt-3.5-turbo",
-                max_tokens=2000,  # Increased to allow for a detailed report
-                temperature=0.7,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=4000,
+                temperature=0.7
             )
             tia_report = response.choices[0].message.content.strip()
             return jsonify({'tia_report': tia_report})
-        except openai.error.RateLimitError as e:
+
+        except openai.RateLimitError:
+            # Rate limit exceeded
             if attempt < max_retries - 1:
-                logging.warning(f"Rate limit exceeded. Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-                retry_delay *= 2  # Exponential backoff
-                continue
-            else:
-                logging.error(f"Rate limit exceeded after {max_retries} attempts: {e}")
-                return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
-        except openai.error.APIConnectionError as e:
-            if attempt < max_retries - 1:
-                logging.warning(f"API connection error. Retrying in {retry_delay} seconds...")
                 time.sleep(retry_delay)
                 retry_delay *= 2
                 continue
             else:
-                logging.error(f"API connection error after {max_retries} attempts: {e}")
+                return jsonify({'error': 'Rate limit exceeded. Please try again later.'}), 429
+
+        except openai.APIConnectionError:
+            # Connection error
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2
+                continue
+            else:
                 return jsonify({'error': 'Unable to connect to OpenAI API. Please try again later.'}), 503
-        except openai.error.APIError as e:
-            logging.error(f"API error: {e}")
+
+        except openai.APIError:
+            # Generic API error
             return jsonify({'error': 'An error occurred while processing your request.'}), 500
-        except Exception as e:
-            logging.error(f"Unexpected error: {e}")
+
+        except Exception:
+            # Catch-all for unexpected errors
             return jsonify({'error': 'An unexpected error occurred.'}), 500
+
+@app.route('/download-docx', methods=['POST'])
+def download_docx():
+    data = request.get_json()
+    if data is None:
+        return jsonify({"error": "No JSON received"}), 400
+
+    project_details = data.get('project_details', {})
+    introduction = data.get('introduction', {})
+    existing_conditions = data.get('existing_conditions', {})
+    proposal = data.get('proposal', {})
+    parking_assessment = data.get('parking_assessment', {})
+    parking_design = data.get('parking_design', {})
+    other_matters = data.get('other_matters', {})
+    conclusion = data.get('conclusion', {})
+
+    context = {
+        'project_title': project_details.get('project_title', ''),
+        'site_address': project_details.get('site_address', ''),
+        'consultant_name': project_details.get('consultant_name', ''),
+        'company_name': project_details.get('company_name', ''),
+        'client_name': project_details.get('client_name', ''),
+        'report_date': project_details.get('report_date', ''),
+
+        'introduction_purpose': introduction.get('purpose', ''),
+        'introduction_council_feedback': introduction.get('council_feedback', ''),
+
+        'existing_conditions_site_location': existing_conditions.get('site_location_description', ''),
+        'existing_conditions_land_use': existing_conditions.get('existing_land_use_and_layout', ''),
+        'existing_conditions_road_network': existing_conditions.get('surrounding_road_network_details', ''),
+        'existing_conditions_public_transport': existing_conditions.get('public_transport_options', ''),
+
+        'proposal_description': proposal.get('description', ''),
+        'proposal_facilities': proposal.get('facilities_details', ''),
+        'proposal_parking': proposal.get('parking_arrangement', ''),
+
+        'parking_existing_provision': parking_assessment.get('existing_parking_provision', ''),
+        'parking_proposed_provision': parking_assessment.get('proposed_parking_provision', ''),
+        'parking_rates_calculations': parking_assessment.get('parking_rates_calculations', ''),
+        'parking_expected_patrons': parking_assessment.get('expected_patrons', ''),
+        'parking_justification': parking_assessment.get('justification', ''),
+
+        'parking_design_dimensions': parking_design.get('dimensions_layout', ''),
+        'parking_design_compliance': parking_design.get('compliance', ''),
+
+        'other_bicycle_parking': other_matters.get('bicycle_parking', ''),
+        'other_loading_waste': other_matters.get('loading_and_waste', ''),
+        'other_traffic_generation': other_matters.get('traffic_generation', ''),
+
+        'conclusion_summary': conclusion.get('summary', '')
+    }
+
+    template_path = 'templates/tia_template.docx'
+    doc = DocxTemplate(template_path)
+    doc.render(context)
+
+    output_stream = io.BytesIO()
+    doc.save(output_stream)
+    output_stream.seek(0)
+
+    return send_file(
+        output_stream,
+        as_attachment=True,
+        download_name='TIA_Report.docx',
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True, port=4999)
