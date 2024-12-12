@@ -16,6 +16,17 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 print("API KEY:")
 print(os.getenv("OPENAI_API_KEY"))
+print(openai.api_key)
+
+completion = openai.chat.completions.create(
+  model = "gpt-3.5-turbo",
+  messages = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Hello!"},
+  ]
+)
+
+print(completion.choices[0].message.content.strip())
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
