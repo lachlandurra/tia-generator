@@ -29,7 +29,7 @@ function TiaReport({ report, formData }) {
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
     try {
       const response = await axios.post(
-        `${BACKEND_URL}/generate-tia`,
+        `${BACKEND_URL}/download-docx`,
         JSON.stringify({ ...formData, ...report }),
         {
           headers: { 'Content-Type': 'application/json' },
