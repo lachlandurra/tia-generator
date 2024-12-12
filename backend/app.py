@@ -14,6 +14,9 @@ load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+print("API KEY:")
+print(os.getenv("OPENAI_API_KEY"))
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
