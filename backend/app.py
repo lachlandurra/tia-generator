@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import openai
+import openai
 import logging
 import time
 from docxtpl import DocxTemplate
@@ -11,9 +12,7 @@ import io
 
 load_dotenv()
 
-client = OpenAI(
-    api_key = os.getenv("OPENAI_API_KEY"),
-)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -87,7 +86,7 @@ Each value should contain a detailed, formalized paragraph or paragraphs that el
     for attempt in range(max_retries):
         try:
             # Use the new API interface
-            response = client.chat.completions.create(
+            response = openai.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=6000,
