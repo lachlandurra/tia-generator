@@ -8,6 +8,7 @@ import Loader from './components/Loader';
 import Alert from '@mui/material/Alert';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { Tabs, Tab, Box, Button } from '@mui/material';
 
 const theme = createTheme({
   palette: {
@@ -41,9 +42,14 @@ function App() {
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [tiaReport, setTiaReport] = useState('');
+  const [tiaReportHistory, setTiaReportHistory] = useState([]); // store all generated reports
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // state to track current tab
+  // 0 = form, 
+  // 1..n = report history tabs
+  const [currentTab, setCurrentTab] = useState(0);
 
   const handleChange = (section, field, value) => {
     const updatedFormData = {
@@ -57,7 +63,6 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTiaReport('');
     setError('');
 
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -69,7 +74,13 @@ function App() {
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      setTiaReport(response.data);
+      const newReport = response.data;
+      // Add the new report to history
+      setTiaReportHistory((prevHistory) => [...prevHistory, newReport]);
+
+      // Switch to the newly added report's tab
+      setCurrentTab(tiaReportHistory.length + 1);
+
     } catch (err) {
       console.error('Error generating TIA:', err);
       setError('An error occurred while generating the TIA.');
@@ -78,29 +89,58 @@ function App() {
     }
   };
 
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
         <Header />
         <Container maxWidth="lg" sx={{ py: 6 }}>
-          {!tiaReport && (
-            <TiaForm
-              formData={formData}
-              handleChange={handleChange}
-              handleSubmit={handleSubmit}
-              loading={loading}
-            />
+          {/* Tabs: one for form, and one for each report */}
+          <Tabs value={currentTab} onChange={handleTabChange} aria-label="TIA Tabs" sx={{ mb: 3 }}>
+            <Tab label="Edit Form" />
+            {tiaReportHistory.map((_, idx) => (
+              <Tab key={idx} label={`Report ${idx + 1}`} />
+            ))}
+          </Tabs>
+
+          {currentTab === 0 && (
+            <>
+              {/* Form View */}
+              <TiaForm
+                formData={formData}
+                handleChange={handleChange}
+                handleSubmit={handleSubmit}
+                loading={loading}
+              />
+              {loading && <Loader />}
+              {error && (
+                <Alert severity="error" sx={{ mt: 4 }}>
+                  {error}
+                </Alert>
+              )}
+            </>
           )}
-          {loading && <Loader />}
-          {error && (
-            <Alert severity="error" sx={{ mt: 4 }}>
-              {error}
-            </Alert>
+
+          {currentTab > 0 && (
+            <>
+              {/* Report View */}
+              <TiaReport
+                report={tiaReportHistory[currentTab - 1]} 
+                formData={formData}
+              />
+              {/* Button to go back to editing form while preserving history */}
+              <Box mt={2} display="flex" justifyContent="flex-start">
+                <Button variant="outlined" color="secondary" onClick={() => setCurrentTab(0)}>
+                  Back to Edit Form
+                </Button>
+              </Box>
+            </>
           )}
-          {tiaReport && (
-            <TiaReport report={tiaReport} formData={formData} />
-          )}
+
         </Container>
       </div>
     </ThemeProvider>
