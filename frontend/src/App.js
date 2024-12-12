@@ -63,7 +63,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        BACKEND_URL,
+        `${BACKEND_URL}/generate-tia`, // Add "/generate-tia"
         JSON.stringify(formData),
         { headers: { 'Content-Type': 'application/json' } }
       );
