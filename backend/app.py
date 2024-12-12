@@ -187,7 +187,7 @@ def download_docx():
         app.logger.debug("Context field '%s': '%s'", key, value)
 
     try:
-        template_path = 'backend/templates/tia_template.docx'
+        template_path = 'templates/tia_template.docx'
         doc = DocxTemplate(template_path)
         doc.render(context)
         app.logger.debug("Docx template rendered successfully.")
