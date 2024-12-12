@@ -88,7 +88,7 @@ Each value should contain a detailed, formalized paragraph or paragraphs that el
         try:
             # Use the new API interface
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=6000,
                 temperature=0.7
