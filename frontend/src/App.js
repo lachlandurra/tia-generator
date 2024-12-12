@@ -14,6 +14,9 @@ const theme = createTheme({
     primary: { main: '#1976d2' },
     secondary: { main: '#dc004e' },
   },
+  typography: {
+    fontFamily: 'Roboto, sans-serif',
+  }
 });
 
 function App() {
@@ -57,18 +60,15 @@ function App() {
     setTiaReport('');
     setError('');
 
-    console.log("handleSubmit triggered, current formData:", formData);
-
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
     try {
       const response = await axios.post(
-        `${BACKEND_URL}/generate-tia`, // Add "/generate-tia"
+        `${BACKEND_URL}/generate-tia`,
         JSON.stringify(formData),
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      console.log("Response from /generate-tia:", response.data);
       setTiaReport(response.data);
     } catch (err) {
       console.error('Error generating TIA:', err);
@@ -81,9 +81,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <div className="bg-gray-100 min-h-screen">
+      <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
         <Header />
-        <Container maxWidth="md" className="bg-white p-6 rounded-lg shadow-md my-10">
+        <Container maxWidth="lg" sx={{ py: 6 }}>
           {!tiaReport && (
             <TiaForm
               formData={formData}
@@ -94,7 +94,7 @@ function App() {
           )}
           {loading && <Loader />}
           {error && (
-            <Alert severity="error" className="mt-4">
+            <Alert severity="error" sx={{ mt: 4 }}>
               {error}
             </Alert>
           )}

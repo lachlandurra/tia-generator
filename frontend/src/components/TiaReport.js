@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Box, Paper, Typography } from '@mui/material';
+import { Button, Box, Paper, Typography, Card, CardContent, Grid } from '@mui/material';
 import axios from 'axios';
 
 const sectionHeadings = {
@@ -26,8 +26,6 @@ const sectionHeadings = {
 
 function TiaReport({ report, formData }) {
   const handleDownloadDocx = async () => {
-    console.log("Initiating Docx download. formData:", formData);
-    console.log("Current report:", report);
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
     try {
       const response = await axios.post(
@@ -39,8 +37,6 @@ function TiaReport({ report, formData }) {
         }
       );
 
-      console.log("Received binary response for docx. Blob data:", response.data);
-  
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement('a');
       link.href = url;
@@ -56,20 +52,26 @@ function TiaReport({ report, formData }) {
 
   return (
     <Box mt={4}>
-      <Paper elevation={3} sx={{ p: 3, maxHeight: '60vh', overflowY: 'auto' }}>
-        <Typography variant="h5" gutterBottom>
-          Generated TIA Report
-        </Typography>
-        <Box sx={{ mt: 2 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+        Generated TIA Report
+      </Typography>
+      <Paper elevation={3} sx={{ p: 3, maxHeight: '60vh', overflowY: 'auto', mb: 3 }}>
+        <Grid container spacing={3}>
           {Object.entries(report).map(([key, value]) => (
-            <Box key={key} mb={3}>
-              <Typography variant="h6" gutterBottom>
-                {sectionHeadings[key] || key.replace(/_/g, ' ')}
-              </Typography>
-              <Typography variant="body1">{value}</Typography>
-            </Box>
+            <Grid item xs={12} key={key}>
+              <Card elevation={1}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    {sectionHeadings[key] || key.replace(/_/g, ' ')}
+                  </Typography>
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {value}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </Box>
+        </Grid>
       </Paper>
       <Box mt={2} display="flex" justifyContent="flex-end">
         <Button variant="contained" color="secondary" onClick={handleDownloadDocx}>

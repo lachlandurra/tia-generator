@@ -1,292 +1,421 @@
-// src/components/TiaForm.js
-import React from 'react';
-import { TextField, Button, Typography } from '@mui/material';
-import Grid from '@mui/material/Grid2';
+import React, { useState, useMemo } from 'react';
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  Stepper,
+  Step,
+  StepLabel,
+  Paper,
+  Card,
+  CardContent,
+  Grid,
+  Divider,
+  FormControlLabel,
+  Switch,
+} from '@mui/material';
+
+const steps = [
+  'Project Details',
+  'Introduction',
+  'Existing Conditions',
+  'The Proposal',
+  'Parking Assessment',
+  'Parking Space Design',
+  'Other Matters',
+  'Conclusion',
+];
 
 function TiaForm({ formData, handleChange, handleSubmit, loading }) {
+  const [activeStep, setActiveStep] = useState(0);
+  const [condensedMode, setCondensedMode] = useState(false);
+
+  const sectionFields = useMemo(() => [
+    // Project Details
+    {
+      title: 'Project Details',
+      fields: [
+        {
+          label: 'Project Title',
+          section: 'project_details',
+          field: 'project_title',
+        },
+        {
+          label: 'Site Address',
+          section: 'project_details',
+          field: 'site_address',
+        },
+        {
+          label: 'Client Name',
+          section: 'project_details',
+          field: 'client_name',
+        },
+        {
+          label: 'Report Date',
+          section: 'project_details',
+          field: 'report_date',
+          type: 'date',
+          InputLabelProps: { shrink: true },
+        },
+      ],
+    },
+    // Introduction
+    {
+      title: 'Introduction',
+      fields: [
+        {
+          label: 'Purpose of the Report',
+          section: 'introduction',
+          field: 'purpose',
+          multiline: true,
+        },
+        {
+          label: 'Council Feedback',
+          section: 'introduction',
+          field: 'council_feedback',
+          multiline: true,
+        },
+      ],
+    },
+    // Existing Conditions
+    {
+      title: 'Existing Conditions',
+      fields: [
+        {
+          label: 'Site Location Description',
+          section: 'existing_conditions',
+          field: 'site_location_description',
+          multiline: true,
+        },
+        {
+          label: 'Existing Land Use and Layout',
+          section: 'existing_conditions',
+          field: 'existing_land_use_and_layout',
+          multiline: true,
+        },
+        {
+          label: 'Surrounding Road Network Details',
+          section: 'existing_conditions',
+          field: 'surrounding_road_network_details',
+          multiline: true,
+        },
+        {
+          label: 'Public Transport Options',
+          section: 'existing_conditions',
+          field: 'public_transport_options',
+          multiline: true,
+        },
+      ],
+    },
+    // The Proposal
+    {
+      title: 'The Proposal',
+      fields: [
+        {
+          label: 'Description of Proposed Development',
+          section: 'proposal',
+          field: 'description',
+          multiline: true,
+        },
+        {
+          label: 'Details of Proposed Facilities',
+          section: 'proposal',
+          field: 'facilities_details',
+          multiline: true,
+        },
+        {
+          label: 'Proposed Parking Arrangement',
+          section: 'proposal',
+          field: 'parking_arrangement',
+          multiline: true,
+        },
+      ],
+    },
+    // Parking Assessment
+    {
+      title: 'Parking Assessment',
+      fields: [
+        {
+          label: 'Existing Parking Provision',
+          section: 'parking_assessment',
+          field: 'existing_parking_provision',
+          multiline: true,
+        },
+        {
+          label: 'Proposed Parking Provision',
+          section: 'parking_assessment',
+          field: 'proposed_parking_provision',
+          multiline: true,
+        },
+        {
+          label: 'Applicable Parking Rates and Calculations',
+          section: 'parking_assessment',
+          field: 'parking_rates_calculations',
+          multiline: true,
+        },
+        {
+          label: 'Expected Number of Patrons',
+          section: 'parking_assessment',
+          field: 'expected_patrons',
+          multiline: true,
+        },
+        {
+          label: 'Justification for Parking Provision',
+          section: 'parking_assessment',
+          field: 'justification',
+          multiline: true,
+        },
+      ],
+    },
+    // Parking Space Design
+    {
+      title: 'Parking Space Design',
+      fields: [
+        {
+          label: 'Dimensions and Layout',
+          section: 'parking_design',
+          field: 'dimensions_layout',
+          multiline: true,
+        },
+        {
+          label: 'Compliance with Standards',
+          section: 'parking_design',
+          field: 'compliance',
+          multiline: true,
+        },
+      ],
+    },
+    // Other Matters
+    {
+      title: 'Other Matters',
+      fields: [
+        {
+          label: 'Bicycle Parking Requirements and Provision',
+          section: 'other_matters',
+          field: 'bicycle_parking',
+          multiline: true,
+        },
+        {
+          label: 'Loading and Waste Collection Details',
+          section: 'other_matters',
+          field: 'loading_and_waste',
+          multiline: true,
+        },
+        {
+          label: 'Traffic Generation Estimates',
+          section: 'other_matters',
+          field: 'traffic_generation',
+          multiline: true,
+        },
+      ],
+    },
+    // Conclusion
+    {
+      title: 'Conclusion',
+      fields: [
+        {
+          label: 'Summary of Findings',
+          section: 'conclusion',
+          field: 'summary',
+          multiline: true,
+        },
+      ],
+    },
+  ], []);
+
+  const isLastStep = activeStep === steps.length - 1;
+
+  const handleNext = () => {
+    if (!isLastStep) {
+      setActiveStep((prev) => prev + 1);
+    }
+  };
+  
+  const handleBack = () => {
+    if (activeStep > 0) {
+      setActiveStep((prev) => prev - 1);
+    }
+  };
+
+  const handleStepClick = (stepIndex) => {
+    // Allow jumping directly to a step if not condensed
+    if (!condensedMode) {
+      setActiveStep(stepIndex);
+    }
+  };
+
+  const currentFields = sectionFields[activeStep];
+
   return (
-    <form onSubmit={handleSubmit}>
-      {/* Project Details */}
-      <Typography variant="h5" gutterBottom className="text-gray-800 font-semibold">
-        Project Details
+    <Box component="form" onSubmit={handleSubmit} sx={{ position: 'relative' }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, textAlign: 'center' }}>
+        Traffic Impact Assessment Form
       </Typography>
+
+      {/* Toggle for condensed mode */}
+      <Box sx={{ textAlign: 'right', mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={condensedMode}
+              onChange={() => setCondensedMode(!condensedMode)}
+              color="primary"
+            />
+          }
+          label="Condensed Mode"
+        />
+      </Box>
+
       <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Project Title"
-            value={formData.project_details.project_title}
-            onChange={(e) => handleChange('project_details', 'project_title', e.target.value)}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Site Address"
-            value={formData.project_details.site_address}
-            onChange={(e) => handleChange('project_details', 'site_address', e.target.value)}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Client Name"
-            value={formData.project_details.client_name}
-            onChange={(e) => handleChange('project_details', 'client_name', e.target.value)}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={6}>
-          <TextField
-            label="Report Date"
-            value={formData.project_details.report_date}
-            onChange={(e) => handleChange('project_details', 'report_date', e.target.value)}
-            fullWidth
-            type="date"
-            InputLabelProps={{ shrink: true }}
-          />
+        {!condensedMode && (
+          <Grid item xs={12} md={3}>
+            <Paper elevation={2} sx={{ p: 2, position: 'sticky', top: '20px' }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
+                Progress
+              </Typography>
+              <Stepper activeStep={activeStep} orientation="vertical">
+                {steps.map((label, index) => (
+                  <Step key={label}>
+                    <StepLabel
+                      onClick={() => handleStepClick(index)}
+                      sx={{
+                        cursor: 'pointer',
+                        '& .MuiStepLabel-label': {
+                          color: index === activeStep ? 'primary.main' : 'inherit',
+                        },
+                      }}
+                    >
+                      {label}
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            </Paper>
+          </Grid>
+        )}
+
+        <Grid item xs={12} md={condensedMode ? 12 : 9}>
+          {condensedMode ? (
+            // Condensed mode: Show all sections and fields at once.
+            <Box>
+              {sectionFields.map((section, secIndex) => (
+                <Card elevation={1} sx={{ mb: 4 }} key={section.title}>
+                  <CardContent>
+                    <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+                      {section.title}
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {section.fields.map((fieldObj, i) => (
+                        <Grid item xs={12} sm={fieldObj.type === 'date' ? 6 : 12} key={i}>
+                          <TextField
+                            label={fieldObj.label}
+                            type={fieldObj.type || 'text'}
+                            value={formData[fieldObj.section][fieldObj.field]}
+                            onChange={(e) => handleChange(fieldObj.section, fieldObj.field, e.target.value)}
+                            fullWidth
+                            multiline={fieldObj.multiline}
+                            minRows={fieldObj.multiline ? 3 : 1}
+                            variant="outlined"
+                            InputLabelProps={fieldObj.InputLabelProps || {}}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          ) : (
+            // Wizard mode: Show only fields for the current step.
+            <Card elevation={1} sx={{ mb: 8 }}>
+              <CardContent>
+                <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+                  {steps[activeStep]}
+                </Typography>
+                <Grid container spacing={2}>
+                  {currentFields.fields.map((fieldObj, i) => (
+                    <Grid item xs={12} sm={fieldObj.type === 'date' ? 6 : 12} key={i}>
+                      <TextField
+                        label={fieldObj.label}
+                        type={fieldObj.type || 'text'}
+                        value={formData[fieldObj.section][fieldObj.field]}
+                        onChange={(e) => handleChange(fieldObj.section, fieldObj.field, e.target.value)}
+                        fullWidth
+                        multiline={fieldObj.multiline}
+                        minRows={fieldObj.multiline ? 3 : 1}
+                        variant="outlined"
+                        InputLabelProps={fieldObj.InputLabelProps || {}}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
       </Grid>
 
-      {/* Introduction */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        Introduction
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Purpose of the Report"
-            value={formData.introduction.purpose}
-            onChange={(e) => handleChange('introduction', 'purpose', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Council Feedback"
-            value={formData.introduction.council_feedback}
-            onChange={(e) => handleChange('introduction', 'council_feedback', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
+      {!condensedMode && (
+        <>
+          <Divider />
+          <Box
+            sx={{
+              position: 'sticky',
+              bottom: 0,
+              background: '#fff',
+              py: 2,
+              mt: 2,
+              textAlign: 'right',
+              borderTop: '1px solid #eee'
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="secondary"
+              disabled={activeStep === 0 || loading}
+              onClick={handleBack}
+              sx={{ mr: 2 }}
+            >
+              Back
+            </Button>
+            {!isLastStep && (
+              <Button variant="contained" color="primary" onClick={handleNext} disabled={loading}>
+                Next
+              </Button>
+            )}
+            {isLastStep && (
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+              >
+                Generate TIA Report
+              </Button>
+            )}
+          </Box>
+        </>
+      )}
 
-      {/* Existing Conditions */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        Existing Conditions
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Site Location Description"
-            value={formData.existing_conditions.site_location_description}
-            onChange={(e) => handleChange('existing_conditions', 'site_location_description', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Existing Land Use and Layout"
-            value={formData.existing_conditions.existing_land_use_and_layout}
-            onChange={(e) => handleChange('existing_conditions', 'existing_land_use_and_layout', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Surrounding Road Network Details"
-            value={formData.existing_conditions.surrounding_road_network_details}
-            onChange={(e) => handleChange('existing_conditions', 'surrounding_road_network_details', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Public Transport Options"
-            value={formData.existing_conditions.public_transport_options}
-            onChange={(e) => handleChange('existing_conditions', 'public_transport_options', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
-
-      {/* The Proposal */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        The Proposal
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Description of Proposed Development"
-            value={formData.proposal.description}
-            onChange={(e) => handleChange('proposal', 'description', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Details of Proposed Facilities"
-            value={formData.proposal.facilities_details}
-            onChange={(e) => handleChange('proposal', 'facilities_details', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Proposed Parking Arrangement"
-            value={formData.proposal.parking_arrangement}
-            onChange={(e) => handleChange('proposal', 'parking_arrangement', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
-
-      {/* Parking Assessment */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        Parking Assessment
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Existing Parking Provision"
-            value={formData.parking_assessment.existing_parking_provision}
-            onChange={(e) => handleChange('parking_assessment', 'existing_parking_provision', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Proposed Parking Provision"
-            value={formData.parking_assessment.proposed_parking_provision}
-            onChange={(e) => handleChange('parking_assessment', 'proposed_parking_provision', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Applicable Parking Rates and Calculations"
-            value={formData.parking_assessment.parking_rates_calculations}
-            onChange={(e) => handleChange('parking_assessment', 'parking_rates_calculations', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Expected Number of Patrons"
-            value={formData.parking_assessment.expected_patrons}
-            onChange={(e) => handleChange('parking_assessment', 'expected_patrons', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Justification for Parking Provision"
-            value={formData.parking_assessment.justification}
-            onChange={(e) => handleChange('parking_assessment', 'justification', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
-
-      {/* Parking Space Design */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        Parking Space Design
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Dimensions and Layout"
-            value={formData.parking_design.dimensions_layout}
-            onChange={(e) => handleChange('parking_design', 'dimensions_layout', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Compliance with Standards"
-            value={formData.parking_design.compliance}
-            onChange={(e) => handleChange('parking_design', 'compliance', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
-
-      {/* Other Matters */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        Other Matters
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Bicycle Parking Requirements and Provision"
-            value={formData.other_matters.bicycle_parking}
-            onChange={(e) => handleChange('other_matters', 'bicycle_parking', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Loading and Waste Collection Details"
-            value={formData.other_matters.loading_and_waste}
-            onChange={(e) => handleChange('other_matters', 'loading_and_waste', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            label="Traffic Generation Estimates"
-            value={formData.other_matters.traffic_generation}
-            onChange={(e) => handleChange('other_matters', 'traffic_generation', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
-
-      {/* Conclusion */}
-      <Typography variant="h5" gutterBottom sx={{ marginTop: 4 }}>
-        Conclusion
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <TextField
-            label="Summary of Findings"
-            value={formData.conclusion.summary}
-            onChange={(e) => handleChange('conclusion', 'summary', e.target.value)}
-            fullWidth
-            multiline
-          />
-        </Grid>
-      </Grid>
-
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        variant="contained"
-        color="primary"
-        disabled={loading}
-        sx={{ marginTop: 4 }}
-      >
-        Generate TIA Report
-      </Button>
-    </form>
+      {condensedMode && (
+        <Box
+          sx={{
+            textAlign: 'right',
+            mt: 3,
+          }}
+        >
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={loading}
+          >
+            Generate TIA Report
+          </Button>
+        </Box>
+      )}
+    </Box>
   );
 }
 
