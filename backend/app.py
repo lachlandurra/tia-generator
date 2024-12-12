@@ -101,9 +101,9 @@ Each value should contain a detailed, formalized paragraph or paragraphs that el
         try:
             # Use the new API interface
             response = openai.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=8000,
+                # max_tokens=8000,
                 temperature=0.7
             )
             app.logger.debug("OpenAI raw response: %s", response)
