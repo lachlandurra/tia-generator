@@ -59,9 +59,11 @@ function App() {
 
     console.log("handleSubmit triggered, current formData:", formData);
 
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
     try {
       const response = await axios.post(
-        process.env.REACT_APP_BACKEND_URL || 'tia-generator-production.up.railway.app',
+        BACKEND_URL,
         JSON.stringify(formData),
         { headers: { 'Content-Type': 'application/json' } }
       );

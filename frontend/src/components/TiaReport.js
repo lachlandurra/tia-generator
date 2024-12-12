@@ -28,9 +28,10 @@ function TiaReport({ report, formData }) {
   const handleDownloadDocx = async () => {
     console.log("Initiating Docx download. formData:", formData);
     console.log("Current report:", report);
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
     try {
       const response = await axios.post(
-        process.env.REACT_APP_BACKEND_URL || 'tia-generator-production.up.railway.app',
+        `${BACKEND_URL}/generate-tia`,
         JSON.stringify({ ...formData, ...report }),
         {
           headers: { 'Content-Type': 'application/json' },
