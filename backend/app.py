@@ -2,25 +2,40 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
 import openai
-import openai
+import ssl
 import logging
 import time
 from docxtpl import DocxTemplate
 import io
+import json
+import httpx
 
+# Load environment variables
 load_dotenv()
 
+# Configure OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-print("API KEY:")
-print(os.getenv("OPENAI_API_KEY"))
-print(openai.api_key)
-
+# Flask app configuration
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
+app.logger.setLevel(logging.DEBUG)
+
+# Set SSL context to resolve potential SSL errors
+httpx._config.DEFAULT_CA_BUNDLE_PATH = None
+ssl_context = ssl._create_unverified_context()
+
+@app.before_request
+def log_request_info():
+    app.logger.debug("Headers: %s", request.headers)
+    app.logger.debug("Body: %s", request.get_data())
+
+@app.after_request
+def log_response_info(response):
+    app.logger.debug("Response status: %s", response.status)
+    return response
 
 @app.route('/', methods=['GET'])
 def home():
@@ -42,15 +57,6 @@ def generate_tia():
     parking_design = data.get('parking_design', {})
     other_matters = data.get('other_matters', {})
     conclusion = data.get('conclusion', {})
-
-    app.logger.debug("Project details: %s", project_details)
-    app.logger.debug("Introduction: %s", introduction)
-    app.logger.debug("Existing Conditions: %s", existing_conditions)
-    app.logger.debug("Proposal: %s", proposal)
-    app.logger.debug("Parking Assessment: %s", parking_assessment)
-    app.logger.debug("Parking Design: %s", parking_design)
-    app.logger.debug("Other Matters: %s", other_matters)
-    app.logger.debug("Conclusion: %s", conclusion)
 
     # Construct the prompt
     prompt = f"""
