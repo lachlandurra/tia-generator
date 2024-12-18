@@ -18,16 +18,6 @@ print("API KEY:")
 print(os.getenv("OPENAI_API_KEY"))
 print(openai.api_key)
 
-completion = openai.chat.completions.create(
-  model = "gpt-3.5-turbo",
-  messages = [
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Hello!"},
-  ]
-)
-
-print(completion.choices[0].message.content.strip())
-
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
@@ -67,7 +57,7 @@ def generate_tia():
 You are a traffic engineer tasked with generating a Traffic Impact Assessment (TIA) report based on the given input. 
 The input is rough, containing only brief points. You must produce a coherent, formal, and detailed TIA report that greatly expands and formalizes each section.
 
-The final output MUST be in JSON format with the following keys and no extra text outside JSON:
+The final output MUST be in JSON format with the below keys and no extra text outside JSON. When it says "A fully formed paragraph(s) based on..." that means you must expand on the text after 'based on':
 
 {{
   "introduction_purpose": "A fully formed paragraph(s) based on {introduction.get('purpose', '')}",
@@ -101,9 +91,9 @@ Each value should contain a detailed, formalized paragraph or paragraphs that el
         try:
             # Use the new API interface
             response = openai.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
-                # max_tokens=8000,
+                max_tokens=8000,
                 temperature=0.7
             )
             app.logger.debug("OpenAI raw response: %s", response)
