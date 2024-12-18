@@ -212,7 +212,7 @@ def test_openai():
 
 
         completion = openai.chat.completions.create(
-        model = "gpt-3.5-turbo",
+        model = "gpt-4o-mini",
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Hello!"},
