@@ -99,7 +99,7 @@ Each value should contain a detailed, formalized paragraph or paragraphs that el
             response = openai.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=8000,
+                max_tokens=4000,
                 temperature=0.7
             )
             app.logger.debug("OpenAI raw response: %s", response)
@@ -136,6 +136,7 @@ Each value should contain a detailed, formalized paragraph or paragraphs that el
             return jsonify({'error': 'An error occurred while processing your request.'}), 500
 
         except Exception as e:
+            print(f"Attempt {attempt + 1}: {e}")
             import traceback
             tb_str = ''.join(traceback.format_exception(None, e, e.__traceback__))
 
@@ -205,6 +206,24 @@ def download_docx():
         app.logger.error("Error generating docx: %s", tb_str)
         return jsonify({"error": str(e), "traceback": tb_str}), 500
 
+@app.route("/test-openai", methods=["GET"])
+def test_openai():
+    try:
+
+
+        completion = openai.chat.completions.create(
+        model = "gpt-3.5-turbo",
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Hello!"},
+        ]
+        )
+
+        print(completion.choices[0].message.content.strip())
+
+        return completion.choices[0].message.content.strip(), 200
+    except Exception as e:
+        return str(e), 500
 
 
 if __name__ == "__main__":
