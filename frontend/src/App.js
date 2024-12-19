@@ -48,7 +48,6 @@ function App() {
 
   const [currentTab, setCurrentTab] = useState(0);
 
-  const [pollingJobId, setPollingJobId] = useState(null);
   const pollingIntervalRef = useRef(null);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -72,13 +71,11 @@ function App() {
         setTiaReportHistory((prevHistory) => [...prevHistory, result]);
         setCurrentTab(tiaReportHistory.length + 1);
         clearInterval(pollingIntervalRef.current);
-        setPollingJobId(null);
         setLoading(false);
       } else if (status === 'failed') {
         // Job failed
         setError(jobError || 'Job failed unexpectedly.');
         clearInterval(pollingIntervalRef.current);
-        setPollingJobId(null);
         setLoading(false);
       }
       // If queued/started, do nothing and let polling continue
@@ -86,7 +83,6 @@ function App() {
       console.error('Error polling job status:', err);
       setError('Error checking job status.');
       clearInterval(pollingIntervalRef.current);
-      setPollingJobId(null);
       setLoading(false);
     }
   };
@@ -104,7 +100,6 @@ function App() {
       );
 
       const { job_id } = enqueueResponse.data;
-      setPollingJobId(job_id);
 
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
