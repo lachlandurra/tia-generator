@@ -15,8 +15,13 @@ import httpx
 import os
 import redis
 from rq import Queue
+from backend.app import generate_tia_report
+
+
 
 redis_url = os.getenv("REDIS_URL")
+if not redis_url:
+    raise ValueError("REDIS_URL not set. Please export REDIS_URL before importing this module.")
 conn = redis.from_url(redis_url)
 q = Queue("default", connection=conn)
 
@@ -215,7 +220,7 @@ def enqueue_generate_tia():
         return jsonify({"error": "No JSON received"}), 400
 
     # Enqueue the job
-    job = q.enqueue('backend.app.generate_tia_report', data)
+    job = q.enqueue(generate_tia_report, data)
     return jsonify({"job_id": job.get_id()}), 202
 
 @app.route('/job-status/<job_id>', methods=['GET'])
