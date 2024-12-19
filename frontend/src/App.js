@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Container from '@mui/material/Container';
 import Header from './components/Header';
@@ -30,7 +30,7 @@ function App() {
       qualifications: 'B.Eng (Civil), MEng Study (Traffic and Transport)',
       contact_details: 'Email: trafficable@gmail.com, Mobile: 0450461917',
       client_name: '',
-      report_date: '',
+      report_date: new Date().toISOString().split('T')[0],
     },
     introduction: { purpose: '', council_feedback: '' },
     existing_conditions: { site_location_description: '', existing_land_use_and_layout: '', surrounding_road_network_details: '', public_transport_options: '' },
@@ -42,14 +42,16 @@ function App() {
   };
 
   const [formData, setFormData] = useState(initialFormData);
-  const [tiaReportHistory, setTiaReportHistory] = useState([]); // store all generated reports
+  const [tiaReportHistory, setTiaReportHistory] = useState([]); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // state to track current tab
-  // 0 = form, 
-  // 1..n = report history tabs
+
   const [currentTab, setCurrentTab] = useState(0);
+
+  const [pollingJobId, setPollingJobId] = useState(null);
+  const pollingIntervalRef = useRef(null);
+
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   const handleChange = (section, field, value) => {
     const updatedFormData = {
@@ -60,31 +62,62 @@ function App() {
     localStorage.setItem('tiaFormData', JSON.stringify(updatedFormData));
   };
 
+  const pollJobStatus = async (jobId) => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/job-status/${jobId}`);
+      const { status, result, error: jobError } = response.data;
+
+      if (status === 'finished') {
+        // Job done, we have the result
+        setTiaReportHistory((prevHistory) => [...prevHistory, result]);
+        setCurrentTab(tiaReportHistory.length + 1);
+        clearInterval(pollingIntervalRef.current);
+        setPollingJobId(null);
+        setLoading(false);
+      } else if (status === 'failed') {
+        // Job failed
+        setError(jobError || 'Job failed unexpectedly.');
+        clearInterval(pollingIntervalRef.current);
+        setPollingJobId(null);
+        setLoading(false);
+      }
+      // If queued/started, do nothing and let polling continue
+    } catch (err) {
+      console.error('Error polling job status:', err);
+      setError('Error checking job status.');
+      clearInterval(pollingIntervalRef.current);
+      setPollingJobId(null);
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
     try {
-      const response = await axios.post(
+      const enqueueResponse = await axios.post(
         `${BACKEND_URL}/generate-tia`,
         JSON.stringify(formData),
         { headers: { 'Content-Type': 'application/json' } }
       );
 
-      const newReport = response.data;
-      // Add the new report to history
-      setTiaReportHistory((prevHistory) => [...prevHistory, newReport]);
+      const { job_id } = enqueueResponse.data;
+      setPollingJobId(job_id);
 
-      // Switch to the newly added report's tab
-      setCurrentTab(tiaReportHistory.length + 1);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+
+      // Poll every 2 seconds
+      pollingIntervalRef.current = setInterval(() => {
+        pollJobStatus(job_id);
+      }, 2000);
 
     } catch (err) {
-      console.error('Error generating TIA:', err);
-      setError('An error occurred while generating the TIA.');
-    } finally {
+      console.error('Error initiating TIA generation job:', err);
+      setError('An error occurred while initiating the TIA generation.');
       setLoading(false);
     }
   };
@@ -93,13 +126,21 @@ function App() {
     setCurrentTab(newValue);
   };
 
+  useEffect(() => {
+    // Clean up interval on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
         <Header />
         <Container maxWidth="lg" sx={{ py: 6 }}>
-          {/* Tabs: one for form, and one for each report */}
           <Tabs value={currentTab} onChange={handleTabChange} aria-label="TIA Tabs" sx={{ mb: 3 }}>
             <Tab label="Edit Form" />
             {tiaReportHistory.map((_, idx) => (
@@ -109,7 +150,6 @@ function App() {
 
           {currentTab === 0 && (
             <>
-              {/* Form View */}
               <TiaForm
                 formData={formData}
                 handleChange={handleChange}
@@ -127,12 +167,10 @@ function App() {
 
           {currentTab > 0 && (
             <>
-              {/* Report View */}
               <TiaReport
-                report={tiaReportHistory[currentTab - 1]} 
+                report={tiaReportHistory[currentTab - 1]}
                 formData={formData}
               />
-              {/* Button to go back to editing form while preserving history */}
               <Box mt={2} display="flex" justifyContent="flex-start">
                 <Button variant="outlined" color="secondary" onClick={() => setCurrentTab(0)}>
                   Back to Edit Form
@@ -140,7 +178,6 @@ function App() {
               </Box>
             </>
           )}
-
         </Container>
       </div>
     </ThemeProvider>
