@@ -15,7 +15,7 @@ import httpx
 import os
 import redis
 from rq import Queue
-from backend.app import generate_tia_report
+from .app import generate_tia_report
 
 
 
