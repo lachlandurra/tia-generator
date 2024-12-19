@@ -15,9 +15,6 @@ import httpx
 import os
 import redis
 from rq import Queue
-from .app import generate_tia_report
-
-
 
 redis_url = os.getenv("REDIS_URL")
 if not redis_url:
