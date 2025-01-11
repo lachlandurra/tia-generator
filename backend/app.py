@@ -76,7 +76,8 @@ The final output MUST be in JSON format with the below keys and no extra text ou
 
 {{
 "introduction_purpose": "A fully formed paragraph(s) based on {introduction.get('purpose', '')}",
-"existing_conditions_site_location": "A fully formed paragraph(s) expanding on {existing_conditions.get('site_location_description', '')}",
+"existing_conditions_site_location": "A fully formed paragraph(s) expanding on {existing_conditions.get('site_location_description', '')}. 
+Include the zoning info: {project_details.get('zoning', '')} and PPTN info: {project_details.get('pptn', '')}.",
 "existing_conditions_land_use": "A fully formed paragraph(s) from {existing_conditions.get('existing_land_use_and_layout', '')}",
 "existing_conditions_road_network": "A fully formed paragraph(s) from {existing_conditions.get('surrounding_road_network_details', '')}",
 "existing_conditions_public_transport": "A fully formed paragraph(s) from {existing_conditions.get('public_transport_options', '')}",
@@ -160,6 +161,10 @@ def download_docx():
     # data now contains both formData and tiaReport keys.
     # tiaReport keys are the placeholders you want to fill:
     context = {
+        'development_type': data["project_details"].get('development_type', ''),
+        'council': data["project_details"].get('council', ''),
+        'client_name': data["project_details"].get('client_name', ''),
+        'site_address': data["project_details"].get('site_address', ''),
         'introduction_purpose': data.get('introduction_purpose', ''),
         'existing_conditions_site_location': data.get('existing_conditions_site_location', ''),
         'existing_conditions_land_use': data.get('existing_conditions_land_use', ''),
