@@ -58,6 +58,26 @@ function TiaForm({ formData, handleChange, handleSubmit, loading }) {
           type: 'date',
           InputLabelProps: { shrink: true },
         },
+        {
+          label: 'Development Type',
+          section: 'project_details',
+          field: 'development_type',
+        },
+        {
+          label: 'Zoning',
+          section: 'project_details',
+          field: 'zoning',
+        },
+        {
+          label: 'PPTN',
+          section: 'project_details',
+          field: 'pptn',
+        },
+        {
+          label: 'Council',
+          section: 'project_details',
+          field: 'council',
+        },        
       ],
     },
     // Introduction

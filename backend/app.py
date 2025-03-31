@@ -73,6 +73,10 @@ def download_docx():
     # data now contains both formData and tiaReport keys.
     # tiaReport keys are the placeholders you want to fill:
     context = {
+        'development_type': data["project_details"].get('development_type', ''),
+        'council': data["project_details"].get('council', ''),
+        'client_name': data["project_details"].get('client_name', ''),
+        'site_address': data["project_details"].get('site_address', ''),
         'introduction_purpose': data.get('introduction_purpose', ''),
         'existing_conditions_site_location': data.get('existing_conditions_site_location', ''),
         'existing_conditions_land_use': data.get('existing_conditions_land_use', ''),
