@@ -21,6 +21,8 @@ except ImportError:
     # Try local import if not in package structure
     from tasks import generate_tia_report
 
+load_dotenv()
+
 # UNCOMMENT FOR PRODUCTION
 redis_url = os.getenv("REDIS_URL")
 if not redis_url:
@@ -30,8 +32,6 @@ q = Queue("default", connection=conn)
 
 import traceback
 
-load_dotenv()
-
 # Configure OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -40,13 +40,6 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 logging.basicConfig(level=logging.DEBUG)
 app.logger.setLevel(logging.DEBUG)
-
-# UNCOMMENT FOR DEV
-# Setup Redis and RQ
-# redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-# print(redis_url)
-# conn = redis.from_url(redis_url)
-# q = Queue('default', connection=conn)
 
 @app.before_request
 def log_request_info():
