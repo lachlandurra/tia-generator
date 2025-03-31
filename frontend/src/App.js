@@ -64,28 +64,28 @@ function App() {
   const pollJobStatus = async (jobId) => {
     try {
       const response = await axios.get(`${BACKEND_URL}/job-status/${jobId}`);
+      console.log('Job status response:', response.data);
       const { status, result, error: jobError } = response.data;
-
+  
       if (status === 'finished') {
-        // Job done, we have the result
+        // Update your UI with the result.
         setTiaReportHistory((prevHistory) => [...prevHistory, result]);
         setCurrentTab(tiaReportHistory.length + 1);
         clearInterval(pollingIntervalRef.current);
         setLoading(false);
       } else if (status === 'failed') {
-        // Job failed
         setError(jobError || 'Job failed unexpectedly.');
         clearInterval(pollingIntervalRef.current);
         setLoading(false);
       }
-      // If queued/started, do nothing and let polling continue
     } catch (err) {
       console.error('Error polling job status:', err);
-      setError('Error checking job status.');
+      setError('An error occurred while processing your request.');
       clearInterval(pollingIntervalRef.current);
       setLoading(false);
     }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
