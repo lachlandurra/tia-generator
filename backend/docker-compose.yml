@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: tia-generator-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=${PORT:-8080}
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4.1-mini}
+      - OPENAI_FAST_MODEL=${OPENAI_FAST_MODEL:-gpt-3.5-turbo-instruct}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE:-0.7}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS:-1000}
+      - OPENAI_MAX_RETRIES=${OPENAI_MAX_RETRIES:-3}
+      - CONCURRENCY_LIMIT=${CONCURRENCY_LIMIT:-5}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      - redis
+    volumes:
+      - ./templates:/app/templates
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --workers 4
+
+  redis:
+    image: redis:7-alpine
+    container_name: tia-generator-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --save 60 1
+
+volumes:
+  redis_data:
