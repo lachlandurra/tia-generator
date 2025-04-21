@@ -33,6 +33,20 @@ class RedisCache:
     
     async def initialize(self):
         """Initialize Redis connection"""
+        url = os.getenv("REDIS_URL")
+        print(f"DEBUG: RAW REDIS_URL = {url!r}")
+        logger.info(f"🔍 REDIS_URL = {url!r}")
+
+        # optional fallback if someone forgot the scheme
+        if url and not url.startswith(("redis://","rediss://","unix://")):
+            url = "redis://" + url
+            print(f"DEBUG: Prefixed REDIS_URL = {url!r}")
+
+        # now make the real connection
+        self._conn = redis.Redis.from_url(url, decode_responses=True)
+        await self._conn.ping()
+        print("DEBUG: Redis ping OK")
+
         if self.initialized:
             return
             
