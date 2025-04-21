@@ -11,14 +11,11 @@ import {
   responsiveFontSizes 
 } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import useScrollTrigger from '@mui/material/useScrollTrigger';
 
 // Icons
 import HistoryIcon from '@mui/icons-material/History';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
-import MenuIcon from '@mui/icons-material/Menu';
-import NightlightIcon from '@mui/icons-material/Nightlight';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,7 +28,6 @@ import Header from './components/Header';
 import TiaForm from './components/TiaForm';
 import TiaReport from './components/TiaReport';
 import Loader from './components/Loader';
-import Footer from './components/Footer';
 import ReportHistory from './components/ReportHistory';
 
 // Create a theme instance with light/dark mode support
@@ -179,7 +175,6 @@ const generateInitialFormData = () => ({
 function App() {
   // Load preferences from localStorage
   const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-  const savedCondensedMode = localStorage.getItem('condensedMode') === 'true';
   const savedCurrentTab = parseInt(localStorage.getItem('currentTab') || '0', 10);
 
   // State management
@@ -202,7 +197,6 @@ function App() {
   
   const pollingIntervalRef = useRef(null);
   const theme = getTheme(darkMode ? 'dark' : 'light');
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   
   // Effect to save report history to localStorage

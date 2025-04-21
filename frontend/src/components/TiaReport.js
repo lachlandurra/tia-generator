@@ -4,7 +4,7 @@ import {
   Button, Box, Paper, Typography, Card, CardContent, 
   Grid, IconButton, Tooltip, Divider, Chip, Accordion,
   AccordionSummary, AccordionDetails, Snackbar, Alert,
-  Breadcrumbs, Link, Fab, Zoom, useMediaQuery, Collapse
+  Breadcrumbs, Link, Fab, Zoom, useMediaQuery
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import axios from 'axios';

@@ -2,19 +2,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box, Button, Typography, TextField, Stepper, Step, StepLabel, Paper,
-  Card, CardContent, Grid, Divider, FormControlLabel, Switch, IconButton,
+  Card, CardContent, Grid, Divider, IconButton,
   LinearProgress, Tooltip, Chip, Accordion, AccordionSummary, AccordionDetails,
   Dialog, DialogActions, DialogContent, DialogTitle, DialogContentText,
-  useMediaQuery, Collapse, Badge, Zoom
+  useMediaQuery, Zoom
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 
 // Icons
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-import InfoIcon from '@mui/icons-material/Info';
 import ModeEditIcon from '@mui/icons-material/ModeEdit';
 import SendIcon from '@mui/icons-material/Send';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
